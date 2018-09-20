@@ -3,6 +3,7 @@
     <div class="survey-form_header">Create a Survey</div>
 
     <span v-for="error in errors" class="survey-form_error">{{error}}</span>
+    <span v-if="savedSuccessfully" class="survey-form_success">{{successMessage}}</span>
 
     <div class="survey-form_inner">
       <label for="survey-title" class='survey-form_label'>Title</label>
@@ -40,7 +41,9 @@ export default {
       description: null,
       points: null,
       questions: [],
-      errors: []
+      errors: [],
+      successMessage: 'Survey has been created successfully!',
+      savedSuccessfully: false
     }
   },
   methods: {
@@ -51,6 +54,7 @@ export default {
         type: '',
         answers: []
       });
+      this.savedSuccessfully = false;
     },
 
     removeQuestion(questionId) {
@@ -59,6 +63,7 @@ export default {
       });
 
       this.questions.splice(questionIndex, 1);
+      this.savedSuccessfully = false;
     },
 
     updateQuestion(questionData) {
@@ -67,20 +72,52 @@ export default {
       });
 
       this.questions[questionIndex] = questionData;
+      this.savedSuccessfully = false;
     },
 
     clearSurvey() {
       this.title = null;
       this.description = null;
       this.points = null;
-      this.questions = []
+      this.questions = [];
+      this.savedSuccessfully = false;
     },
 
     saveSurvey() {
       if(this.validateSurvey()) {
-        var survey = {
+        var questions = [],
+            question,
+            questionObj,
+            answers;
+
+        for(var i=0; i<this.questions.length; i++) {
+          question = this.questions[i];
+          questionObj = {};
+
+          if(question.answers.length) {
+            answers = [];
           
+            for(var j=0; j<question.answers.length; j++) {
+              answers.push(question.answers[j].value);
+            }
+        
+            questionObj.answers = answers;
+          }
+
+          questionObj.title = question.title;
+          questionObj.type = question.type;
+          questions.push(questionObj);
         }
+
+        var survey = {
+          title: this.title,
+          description: this.description,
+          pointValue: this.points,
+          questions: questions
+        }
+
+        this.savedSuccessfully = true;
+        console.log(JSON.stringify(survey));
       }
     },
 
@@ -217,6 +254,37 @@ form.survey-form {
   }
 }
 
+.survey-form_success {
+  color: green;
+    margin: 5px 0;
+  padding: 0 calc((100% - 720px)/2);
+
+  &:before {
+    position: relative;
+    bottom: 1px;
+
+    display: inline-block;
+    box-sizing: border-box;
+    width: 21px;
+    border: 1px solid;
+    border-radius: 50%;
+    margin-right: 5px;
+    padding-right: 3px;
+
+    content: '✓';
+    font-weight: bold;
+    text-align: center;
+  }
+
+  &:first-of-type {
+    margin-top: 0;
+  }
+
+  &:last-of-type {
+    margin-bottom: 25px;
+  }
+}
+
 .survey-form_label {
   margin-bottom: 5px;
 }
@@ -231,6 +299,7 @@ form.survey-form {
 .survey-form_button {
   flex-shrink: 0;
   box-shadow: none;
+  border-color: #444;
   border-radius: 2px;
 
   font-size: 1em;

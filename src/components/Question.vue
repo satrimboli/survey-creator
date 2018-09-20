@@ -3,19 +3,20 @@
     <button @click="removeQuestion" class="survey-form_button survey-form_button--icon">&#215;</button>
     
     <label for="question-title" class="survey-form_label">Title</label>
-    <input v-model="title" @change="updateQuestion" type="text" name="question-title" id="" class="survey-form_input">
+    <input v-model="title" @change="updateQuestion" name="question-title" type="text" class="survey-form_input">
 
     <label for="question-type" class="survey-form_label">Type</label>
-    <select v-model="type" @change="updateQuestion" name="question-type" id="" class="survey-form_input">
+    <select v-model="type" @change="updateQuestion" name="question-type" class="survey-form_input">
+      <option value=""></option>
       <option value="text">Textbox</option>
       <option value="radio">Radio Button</option>
       <option value="check">Checkbox</option>
     </select>
 
-    <div class='survey-form_answers' v-if="needsAnswer">
+    <div v-if="needsAnswer" class='survey-form_answers'>
       <label for="question-answer" class="survey-form_label">Answers</label>
       <QuestionAnswer v-for="answer in answers" :id="answer.id" :initialValue="answer.value" @removeAnswer=removeAnswer @updateAnswer=updateAnswer></QuestionAnswer>
-      <button @click="addAnswer" class="survey-form_button survey-form_button--answer">Add Answer &#43;</button>
+      <button @click="addAnswer" class="survey-form_button survey-form_button--add-answer">Add Answer &#43;</button>
     </div>
   </div>
 </template>
@@ -30,14 +31,14 @@ export default {
   },
   props: {
     id: Number,
+    initialTitle: String,
     initialType: String,
     answers: {
       type: Array,
       default: function() {
         return []
       }
-    },
-    initialTitle: String
+    }
   },
   data: function() {
     return {
@@ -53,11 +54,11 @@ export default {
   methods: {
     addAnswer() {
       this.answers.push({
-        id: this.answers.length,
+        id: this.answers.length + 1,
         value: ''
       });
+
       this.updateQuestion();
-      
     },
 
     removeAnswer(answerId) {
@@ -69,6 +70,15 @@ export default {
       this.updateQuestion();
     },
 
+    updateAnswer(answerData) {
+      var answerIndex = this.answers.findIndex(function(answer) {
+        return answer.id === answerData.id;
+      });
+
+      this.answers[answerIndex] = answerData;
+      this.updateQuestion();
+    },
+
     removeQuestion() {
       this.$emit('removeQuestion', this.id);
     },
@@ -76,21 +86,10 @@ export default {
     updateQuestion() {
       this.$emit('updateQuestion', {
         id: this.id,
+        title: this.title,        
         type: this.type,
-        answers: this.answers,
-        title: this.title
+        answers: this.answers
       });
-    },
-
-    updateAnswer(answerData) {
-      var answerId = answerData.id;
-      var answerIndex = this.answers.findIndex(function(answer) {
-        return answer.id === answerId;
-      });
-
-      this.answers[answerIndex] = answerData;
-
-      this.updateQuestion();
     }
   }
 }
@@ -98,21 +97,30 @@ export default {
 
 <style lang="scss">
 .survey-form.survey-form--question {
-  border: 1px solid black;
-  padding: 45px 15px 15px 15px;
-  margin: 10px 0;
   flex-shrink: 0;
+  border: 1px solid black;
+  margin: 10px 0;
+  padding: 20px 10px 10px;
 
+  font-size: .9em;
 
   > .survey-form_button--icon {
     position: absolute;
-    right: 15px;
-    top: 15px;
+    right: 10px;
+    top: 13px;
+  }
+
+  .survey-form_button--add-answer {
+    line-height: 30px;
   }
 
   .survey-form_answers {
     display: flex;
     flex-direction: column;
+  }
+
+  :last-child {
+    margin-bottom: 5px;
   }
 }
 </style>

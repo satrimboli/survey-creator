@@ -1,25 +1,25 @@
 <template>
   <form v-on:submit.prevent class='survey-form' >
-    <h1>Create a Survey</h1>
+    <div class="survey-form_header">Create a Survey</div>
+
+    <span v-for="error in errors" class="survey-form_error">{{error}}</span>
 
     <div class="survey-form_inner">
-      <span v-for="error in errors">{{error}}</span>
-
       <label for="survey-title" class='survey-form_label'>Title</label>
-      <input v-model="title" type="text" name="survey-title" class='survey-form_input' size="150" maxlength="100">
+      <input v-model="title" name="survey-title" type="text" class='survey-form_input' size="150" maxlength="100">
 
       <label for="survey-description" class='survey-form_label'>Description</label>
       <textarea v-model="description" name="survey-description" class='survey-form_input' cols="30" rows="10" maxlength="500"></textarea>
 
       <label for="survey-points" class='survey-form_label'>Points</label>
-      <input v-model.number="points" type="number" name="survey-points" class='survey-form_input'>
+      <input v-model.number="points" name="survey-points" type="number" class='survey-form_input'>
 
-      <label>Questions</label>
-      <Question v-for="question in questions" @updateQuestion=updateQuestion :initialTitle="question.title" :id="question.id" :initialType="question.type" :answers="question.answers" @removeQuestion=removeQuestion></Question>
-      <button @click="addQuestion" class="survey-form_button survey-form_button--question">Add Question &#43;</button>
+      <label class="survey-form_label">Questions</label>
+      <Question v-for="question in questions"  :id="question.id" :initialTitle="question.title" :initialType="question.type" :answers="question.answers" @removeQuestion=removeQuestion @updateQuestion=updateQuestion></Question>
+      <button @click="addQuestion" class="survey-form_button survey-form_button--add-question">Add Question &#43;</button>
     </div>
    
-    <div class="survey-form--adjacent">
+    <div class="survey-form_footer">
       <button @click=clearSurvey class="survey-form_button">Clear</button>
       <button @click=saveSurvey class="survey-form_button">Save</button>
     </div>
@@ -40,18 +40,16 @@ export default {
       description: null,
       points: null,
       questions: [],
-      errors: [
-
-      ]
+      errors: []
     }
   },
   methods: {
     addQuestion() {
       this.questions.push({
-        id: this.questions.length,
-        type: 'text',
-        answers: [],
-        title: ''
+        id: this.questions.length + 1,
+        title: '',
+        type: '',
+        answers: []
       });
     },
 
@@ -64,13 +62,11 @@ export default {
     },
 
     updateQuestion(questionData) {
-      var questionId = questionData.id;
       var questionIndex = this.questions.findIndex(function(question) {
-        return question.id === questionId;
+        return question.id === questionData.id;
       });
 
       this.questions[questionIndex] = questionData;
-      console.log(this.questions[questionIndex])
     },
 
     clearSurvey() {
@@ -109,6 +105,10 @@ export default {
 
       for(var i=0; i<this.questions.length; i++) {
         var question = this.questions[i];
+
+        if(!question.type) {
+          this.errors.push('Each question must have a type.');
+        }
         if(!question.title || question.length < 250) {
           this.errors.push('Each question title must be more than 0 and less than 250 characters.');
         }
@@ -124,22 +124,96 @@ export default {
 </script>
 
 <style lang="scss">
+body {
+  margin: 0;
+}
+
 .survey-form {
   position: relative;
   display: flex;
   flex-direction: column;
-  // align-items: flex-start;
-  
-  > * {
-    flex-shrink: 0;
-  }
-  max-width: 720px;
-  margin: 0 auto;
 
   font-family: sans-serif;
+}
 
-  * {
+form.survey-form {
+  height: 100vh;
+
+  > .survey-form {
+    flex: 0 1 auto;
+    overflow: scroll;
+  }
+}
+
+.survey-form_header,
+.survey-form_footer {
+  flex: 0 0 auto;
+  
+  text-align: center;
+}
+
+.survey-form_header {
+  border-bottom: 2px solid #000;
+  margin: 0 0 25px;
+  
+  font-size: 1.1em;
+  font-weight: bold;
+  line-height: 40px;
+}
+
+.survey-form_footer {
+  display: flex;
+  margin: 25px 0 0;
+
+  .survey-form_button {
+    flex: 1;
+    border: 2px solid #000;
+    border-radius: 0;
+
+    font-weight: bold;
+
+    + .survey-form_button {
+      border-left: 0;
+    }
+  }
+}
+
+.survey-form_inner {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  overflow-y: scroll;  
+  padding: 0 calc((100% - 720px)/2);
+}
+
+.survey-form_error {
+  margin: 5px 0;
+  padding: 0 calc((100% - 720px)/2);
+
+  color: #d00000;
+  
+  &:before {
+    position: relative;
+    bottom: 1px;
+
+    display: inline-block;
     box-sizing: border-box;
+    width: 20px;
+    border: 1px solid;
+    border-radius: 50%;
+    margin-right: 5px;
+    
+    content: '!';
+    font-weight: bold;
+    text-align: center;
+  }
+
+  &:first-of-type {
+    margin-top: 0;
+  }
+
+  &:last-of-type {
+    margin-bottom: 25px;
   }
 }
 
@@ -150,62 +224,30 @@ export default {
 .survey-form_input {
   margin-bottom: 20px;
   flex-shrink: 0;
+
+  font-size: 1em;
 }
 
 .survey-form_button {
-  font-size: 1em;
-  border-radius: 2px;
+  flex-shrink: 0;
   box-shadow: none;
-  padding: 10px 15px;
-  flex-shrink: 0;
-}
+  border-radius: 2px;
 
-.survey-form--adjacent {
-  display: flex;
-  width: 100%;
-  margin: 15px 0;
-  flex-shrink: 0;
-  flex: 0 0 auto;
-  
-  .survey-form_button {
-    flex: 1;
-
-    &:first-of-type {
-    margin-right: 10px;
-
-    }
-  }
+  font-size: 1em;
+  line-height: 40px;
 }
 
 .survey-form_button--icon {
-  padding: 5px;
-  line-height: 1;
+  border: 0;
+  padding: 0;
+
+  cursor: pointer;
+  font-size: 1.2em;
+  font-weight: bold;
+  line-height: 0;
 }
 
-.survey-form_button--question {
+.survey-form_button--add-question {
   margin: 15px 0;
-}
-
-form.survey-form {
-  height: 100vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-
-  h1 {
-    flex: 0 0 auto;
-  }
-
-  > .survey-form {
-    flex: 0 1 auto;
-    overflow: scroll;
-  }
-}
-
-.survey-form_inner {
-  display: flex;
-  flex-direction: column;
-  overflow-y: scroll;
-  flex: 0 1 auto;
 }
 </style>
